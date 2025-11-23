@@ -15,8 +15,13 @@ public class Utils {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
+            String url = (Modules.get().get(HyperloopModule.class).host.get());
+            if(url.endsWith("/")) {
+                url = url.substring(0, url.length() - 1);
+            }
+
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(Modules.get().get(HyperloopModule.class).host.get() + "/api/homes"))
+                .uri(URI.create(url + "/api/homes"))
                 .header("Authorization", Modules.get().get(HyperloopModule.class).apiKey.get())
                 .GET()
                 .build();
@@ -35,8 +40,13 @@ public class Utils {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
+            String url = (Modules.get().get(HyperloopModule.class).host.get());
+            if(url.endsWith("/")) {
+                url = url.substring(0, url.length() - 1);
+            }
+
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(Modules.get().get(HyperloopModule.class).host.get() + "/api/teleport/" + home))
+                .uri(URI.create(url + "/api/teleport/" + home))
                 .header("Authorization", Modules.get().get(HyperloopModule.class).apiKey.get())
                 .header("Username", username)
                 .POST(HttpRequest.BodyPublishers.noBody())
