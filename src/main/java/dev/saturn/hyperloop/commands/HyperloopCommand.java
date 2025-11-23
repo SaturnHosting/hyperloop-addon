@@ -4,9 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.saturn.hyperloop.modules.HyperloopModule;
 import dev.saturn.hyperloop.util.Utils;
 import meteordevelopment.meteorclient.commands.Command;
+import meteordevelopment.meteorclient.systems.modules.Modules;
 import net.minecraft.command.CommandSource;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
@@ -21,6 +24,7 @@ public class HyperloopCommand extends Command {
 
     @Override
     public void build(LiteralArgumentBuilder<CommandSource> builder) {
+        //list
         builder.then(literal("list").executes(context -> {
             new Thread(() -> {
                 try {
@@ -80,5 +84,48 @@ public class HyperloopCommand extends Command {
 
             return SINGLE_SUCCESS;
         }));
+
+        builder.then(
+            literal("tp").then(argument("loop", StringArgumentType.string()).executes(context -> {
+                if(!Modules.get().get(HyperloopModule.class).isActive()) {
+                    info("You need to enable the Hyperloop module!");
+                    return 0;
+                }
+                    new Thread(() -> {
+                        try {
+                            String home = StringArgumentType.getString(context, "loop");
+
+                            if (mc.player != null) {
+                                String teleportResult = Utils.teleport(home, mc.player.getName().getString());
+
+                                //attempt to parse json
+                                JsonElement element = JsonParser.parseString(teleportResult);
+                                if (element.isJsonObject()) {
+                                    JsonObject obj = element.getAsJsonObject();
+                                    if (obj.has("bot")) {
+                                        String botName = obj.get("bot").getAsString();
+                                        info("Starting hyperloop towards " + home + " using " +  botName);
+                                        HyperloopModule.teleporting = true;
+                                        HyperloopModule.botName = botName;
+
+                                    } else {
+                                        info("No 'bot' property found in JSON.");
+                                    }
+                                } else {
+                                    info("Teleport result is not a JSON object: " + teleportResult);
+                                }
+                            } else {
+                                info("No player found to teleport.");
+                            }
+                        } catch (Exception ex) {
+                            info("Error teleporting: " + ex.getMessage());
+                            ex.printStackTrace();
+                        }
+                    }).start();
+
+                return SINGLE_SUCCESS;
+            })
+            )
+        );
     }
 }
