@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "hyperloop",
+  "version": "${version}",
+  "name": "Saturn Hyperloop",
+  "description": "Client for Saturn's hyperloop network.",
+  "authors": [
+    "aze"
+  ],
+  "icon": "assets/template/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "dev.saturn.hyperloop.Hyperloop"
+    ]
+  },
+  "custom": {
+    "meteor-client:color": "0,0,0"
+  },
+  "depends": {
+    "java": ">=21",
+    "minecraft": ["${mc_version}"],
+    "meteor-client": "*"
+  }
+}
