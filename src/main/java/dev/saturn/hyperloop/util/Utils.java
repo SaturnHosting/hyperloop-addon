@@ -10,16 +10,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class Utils {
-    public static final String API_URL = Modules.get().get(HyperloopModule.class).host.get();
-    public static final String API_KEY = Modules.get().get(HyperloopModule.class).apiKey.get();
 
     public static String fetchLoops() {
         try {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "/api/homes"))
-                .header("Authorization", API_KEY)
+                .uri(URI.create(Modules.get().get(HyperloopModule.class).host.get() + "/api/homes"))
+                .header("Authorization", Modules.get().get(HyperloopModule.class).apiKey.get())
                 .GET()
                 .build();
 
@@ -38,8 +36,8 @@ public class Utils {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "/api/teleport/" + home))
-                .header("Authorization", API_KEY)
+                .uri(URI.create(Modules.get().get(HyperloopModule.class).host.get() + "/api/teleport/" + home))
+                .header("Authorization", Modules.get().get(HyperloopModule.class).apiKey.get())
                 .header("Username", username)
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
