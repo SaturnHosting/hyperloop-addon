@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 
 public class Hyperloop extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
-    public static final Category CATEGORY = new Category("Example");
+    public static final Category CATEGORY = new Category("Hyperloop");
 
     @Override
     public void onInitialize() {
