@@ -7,7 +7,7 @@
   "authors": [
     "Saturn"
   ],
-  "icon": "assets/template/icon.png",
+  "icon": "assets/hyperloop/icon.png",
   "environment": "client",
   "entrypoints": {
     "meteor": [
@@ -15,7 +15,7 @@
     ]
   },
   "custom": {
-    "meteor-client:color": "0,0,0"
+    "meteor-client:color": "189,95,211"
   },
   "depends": {
     "java": ">=21",
