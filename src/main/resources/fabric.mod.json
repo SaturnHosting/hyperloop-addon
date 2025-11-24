@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "hyperloop",
   "version": "${version}",
-  "name": "Saturn Hyperloop",
+  "name": "Hyperloop",
   "description": "Client for Saturn's hyperloop network.",
   "authors": [
-    "aze"
+    "Saturn"
   ],
   "icon": "assets/template/icon.png",
   "environment": "client",
