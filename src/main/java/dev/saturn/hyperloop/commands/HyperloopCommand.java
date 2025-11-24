@@ -83,7 +83,7 @@ public class HyperloopCommand extends Command {
                         error("Error: can't send message to player, god knows why...");
 
                 } catch (Exception ex) {
-                    error("error fetching: " + ex.getMessage());
+                    error("Error fetching JSON. Is the API online/correct? ");
                     ex.printStackTrace();
                 }
             }).start();
