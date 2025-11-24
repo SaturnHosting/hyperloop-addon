@@ -31,10 +31,16 @@ public class HyperloopCommand extends Command {
                     String json = Utils.fetchLoops();
 
                     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+                    if(root.has("error")) {
+                        error("Error: " + root.get("error").getAsString());
+                        return;
+                    }
+
                     JsonArray homes = root.getAsJsonArray("homes");
 
                     if (homes == null || homes.isEmpty()) {
-                        info("No homes found.");
+                        error("Error: No homes found.");
                         return;
                     }
 
@@ -74,10 +80,10 @@ public class HyperloopCommand extends Command {
                     if (mc.player != null)
                         mc.player.sendMessage(finalMessage, false);
                     else
-                        info("can't send message to player, god knows why...");
+                        error("Error: can't send message to player, god knows why...");
 
                 } catch (Exception ex) {
-                    info("error fetching: " + ex.getMessage());
+                    error("error fetching: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }).start();
@@ -98,7 +104,6 @@ public class HyperloopCommand extends Command {
                             if (mc.player != null) {
                                 String teleportResult = Utils.teleport(home, mc.player.getName().getString());
 
-                                //attempt to parse json
                                 JsonElement element = JsonParser.parseString(teleportResult);
                                 if (element.isJsonObject()) {
                                     JsonObject obj = element.getAsJsonObject();
@@ -108,17 +113,21 @@ public class HyperloopCommand extends Command {
                                         HyperloopModule.teleporting = true;
                                         HyperloopModule.botName = botName;
 
-                                    } else {
-                                        info("No 'bot' property found in JSON.");
+                                    } else if(obj.has("error")) {
+                                        String error = obj.get("error").getAsString();
+                                        error("Error: " + error);
+                                    }
+                                    else {
+                                        error("Error: No 'bot' property found in JSON.");
                                     }
                                 } else {
-                                    info("Teleport result is not a JSON object: " + teleportResult);
+                                    error("Error: Teleport result is not a JSON object: " + teleportResult);
                                 }
                             } else {
-                                info("No player found to teleport.");
+                                error("Error: No player found to teleport.");
                             }
                         } catch (Exception ex) {
-                            info("Error teleporting: " + ex.getMessage());
+                            error("Error teleporting: " + ex.getMessage());
                             ex.printStackTrace();
                         }
                     }).start();
