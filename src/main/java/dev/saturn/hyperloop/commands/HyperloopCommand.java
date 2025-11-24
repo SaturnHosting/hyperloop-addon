@@ -127,7 +127,7 @@ public class HyperloopCommand extends Command {
                                 error("Error: No player found to teleport.");
                             }
                         } catch (Exception ex) {
-                            error("Error teleporting: " + ex.getMessage());
+                            error("Error teleporting - invalid response. Is the API online/correct?");
                             ex.printStackTrace();
                         }
                     }).start();
