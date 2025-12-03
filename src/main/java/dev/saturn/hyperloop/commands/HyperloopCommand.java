@@ -17,6 +17,8 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.concurrent.CompletableFuture;
+
 public class HyperloopCommand extends Command {
     public HyperloopCommand() {
         super("hyperloop", "Lists hyperloop homes (hover for details).", "hp");
@@ -92,7 +94,31 @@ public class HyperloopCommand extends Command {
         }));
 
         builder.then(
-            literal("tp").then(argument("loop", StringArgumentType.string()).executes(context -> {
+            literal("tp")
+                .then(argument("loop", StringArgumentType.string()).suggests((context, suggestionsBuilder) -> {
+
+                    return CompletableFuture.supplyAsync(() -> {
+                        String json = Utils.fetchLoops();
+
+                        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+                        if (root.has("error")) {
+                            return suggestionsBuilder.build();
+                        }
+
+                        JsonArray homes = root.getAsJsonArray("homes");
+                        if (homes == null || homes.isEmpty()) {
+                            return suggestionsBuilder.build();
+                        }
+
+                        for (JsonElement e : homes) {
+                            JsonObject h = e.getAsJsonObject();
+                            suggestionsBuilder.suggest(h.get("home").getAsString());
+                        }
+
+                        return suggestionsBuilder.build();
+                    });
+                }).executes(context -> {
                 if(!Modules.get().get(HyperloopModule.class).isActive()) {
                     info("You need to enable the Hyperloop module!");
                     return 0;
