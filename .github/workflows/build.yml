@@ -1,8 +1,5 @@
-name: Publish Development Build
+name: Publish Build
 on: push
-
-permissions:
-  contents: write
 
 jobs:
   build:
@@ -11,6 +8,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+            persist-credentials: false
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -20,8 +19,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 21
-        
-      - name: Make gradlew executable
+
+      - name: Chmod gradlew
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
@@ -32,7 +31,7 @@ jobs:
         with:
           repo_token: '${{ secrets.GITHUB_TOKEN }}'
           automatic_release_tag: snapshot
-          prerelease: true
-          title: Build
+          prerelease: false
+          title: Release
           files: |
             ./build/libs/*.jar
