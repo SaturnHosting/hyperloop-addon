@@ -71,7 +71,7 @@ public class HyperloopCommand extends Command {
                         Style hoverStyle = Style.EMPTY
                             .withColor(Formatting.LIGHT_PURPLE)
                             .withBold(false)
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover));
+                            .withHoverEvent(new HoverEvent.ShowText(hover));
 
                         if (!first) {
                             finalMessage.append(Text.literal(", "));
@@ -254,13 +254,16 @@ public class HyperloopCommand extends Command {
                                             } else {
                                                 Text homeText = Text.literal(closestHome.get("home").getAsString())
                                                     .setStyle(
-                                                        Style.EMPTY.withColor(Formatting.LIGHT_PURPLE)
+                                                        Style.EMPTY
+                                                            .withColor(Formatting.LIGHT_PURPLE)
                                                             .withHoverEvent(
-                                                                new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                                                new HoverEvent.ShowText(
                                                                     Text.literal(
                                                                         "Dimension: " + closestHome.get("dimension").getAsString() +
                                                                             "\nX: " + closestHome.get("x").getAsInt() +
-                                                                            "\nZ: " + closestHome.get("z").getAsInt()))
+                                                                            "\nZ: " + closestHome.get("z").getAsInt()
+                                                                    )
+                                                                )
                                                             )
                                                     );
 

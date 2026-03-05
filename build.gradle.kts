@@ -1,11 +1,22 @@
+import org.gradle.api.tasks.Exec
+
 plugins {
-    id("fabric-loom") version "1.9-SNAPSHOT"
+    alias(libs.plugins.fabric.loom)
 }
+
+val mcVer = project.findProperty("mcVer") as? String ?: libs.versions.minecraft.get()
+val yarnVer = project.findProperty("yarnVer") as? String ?: libs.versions.yarn.mappings.get()
+val meteorVer = project.findProperty("meteorVer") as? String ?: libs.versions.meteor.get()
 
 base {
     archivesName = properties["archives_base_name"] as String
-    version = properties["mod_version"] as String
+    val rawVersion = properties["mod_version"] as String
+    version = rawVersion.replace("{mc_version}", mcVer)
     group = properties["maven_group"] as String
+}
+
+if (project.hasProperty("targetBuildDir")) {
+    layout.buildDirectory.set(file(project.property("targetBuildDir") as String))
 }
 
 repositories {
@@ -17,23 +28,25 @@ repositories {
         name = "meteor-maven-snapshots"
         url = uri("https://maven.meteordev.org/snapshots")
     }
+    mavenCentral()
 }
+
+
 
 dependencies {
-    // Fabric
-    minecraft("com.mojang:minecraft:${properties["minecraft_version"] as String}")
-    mappings("net.fabricmc:yarn:${properties["yarn_mappings"] as String}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"] as String}")
+    minecraft("com.mojang:minecraft:$mcVer")
+    mappings("net.fabricmc:yarn:$yarnVer:v2")
 
-    // Meteor
-    modImplementation("meteordevelopment:meteor-client:${properties["minecraft_version"] as String}-SNAPSHOT")
+    modImplementation(libs.fabric.loader)
+    modImplementation("meteordevelopment:meteor-client:$meteorVer")
 }
+
 
 tasks {
     processResources {
         val propertyMap = mapOf(
             "version" to project.version,
-            "mc_version" to project.property("minecraft_version"),
+            "mc_version" to mcVer
         )
 
         inputs.properties(propertyMap)
@@ -46,9 +59,10 @@ tasks {
     }
 
     jar {
-        val licenseSuffix = project.base.archivesName.get()
+        inputs.property("archivesName", project.base.archivesName.get())
+
         from("LICENSE") {
-            rename { "${it}_${licenseSuffix}" }
+            rename { "${it}_${inputs.properties["archivesName"]}" }
         }
     }
 
@@ -60,5 +74,62 @@ tasks {
     withType<JavaCompile> {
         options.encoding = "UTF-8"
         options.release = 21
+        options.compilerArgs.add("-Xlint:deprecation")
+        options.compilerArgs.add("-Xlint:unchecked")
+    }
+
+}
+
+val targets = mapOf(
+    "1.21.10" to "1.21.10+build.3",
+    "1.21.11" to "1.21.11+build.1"
+)
+
+val rawModVersion = project.properties["mod_version"] as? String ?: "1.0.0"
+
+val buildTaskProviders = ArrayList<TaskProvider<Exec>>()
+
+targets.forEach { (mc, yarn) ->
+    val t = tasks.register<Exec>("build_v$mc") {
+        group = "build versions"
+        description = "Builds release for Minecraft $mc"
+
+        val versionBuildDir = "build/versions/$mc"
+        val meteor = "$mc-SNAPSHOT"
+        val computedVersion = rawModVersion.replace("{mc_version}", mc)
+
+        val gradleCmd = if (System.getProperty("os.name").lowercase().contains("win")) "gradlew.bat" else "./gradlew"
+
+        executable = gradleCmd
+        args(
+            "build",
+            "-PmcVer=$mc",
+            "-PyarnVer=$yarn",
+            "-PmeteorVer=$meteor",
+            "-Pmod_version=$computedVersion",
+            "-PtargetBuildDir=$versionBuildDir"
+        )
+
+        doFirst {
+            println("Building $computedVersion for MC $mc...")
+        }
+    }
+    buildTaskProviders.add(t)
+}
+
+for (i in 1 until buildTaskProviders.size) {
+    buildTaskProviders[i].configure {
+        mustRunAfter(buildTaskProviders[i - 1])
+    }
+}
+
+tasks.register("buildAll") {
+    group = "build"
+    description = "Builds the mod for all targeted Minecraft versions sequentially"
+
+    dependsOn(buildTaskProviders)
+
+    doLast {
+        println("All builds completed. Check 'build/versions/' for artifacts.")
     }
 }
