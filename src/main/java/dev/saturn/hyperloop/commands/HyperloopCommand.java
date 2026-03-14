@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.saturn.hyperloop.modules.HyperloopModule;
@@ -17,6 +18,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class HyperloopCommand extends Command {
@@ -69,7 +71,7 @@ public class HyperloopCommand extends Command {
                         Style hoverStyle = Style.EMPTY
                             .withColor(Formatting.LIGHT_PURPLE)
                             .withBold(false)
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover));
+                            .withHoverEvent(new HoverEvent.ShowText(hover));
 
                         if (!first) {
                             finalMessage.append(Text.literal(", "));
@@ -162,5 +164,128 @@ public class HyperloopCommand extends Command {
             })
             )
         );
+
+        builder.then(
+            literal("dist")
+                .then(argument("dim", StringArgumentType.word())
+                    .then(argument("x", IntegerArgumentType.integer())
+                        .then(argument("z", IntegerArgumentType.integer())
+                            .executes(context -> {
+                                if(!Modules.get().get(HyperloopModule.class).isActive()) {
+                                    info("You need to enable the Hyperloop module!");
+                                    return 0;
+                                }
+
+                                String dim = StringArgumentType.getString(context, "dim").toLowerCase();
+                                int x = IntegerArgumentType.getInteger(context, "x");
+                                int z = IntegerArgumentType.getInteger(context, "z");
+
+                                new Thread(() -> {
+                                    try {
+                                        if (mc.player != null) {
+                                            String json = Utils.fetchLoops();
+                                            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+                                            JsonArray homes = root.getAsJsonArray("homes");
+
+                                            if (homes == null || homes.isEmpty()) {
+                                                info("No homes found.");
+                                                return;
+                                            }
+
+                                            JsonObject closestHome = null;
+                                            double closestDist = Double.MAX_VALUE;
+
+                                            for (JsonElement e : homes) {
+                                                if (!e.isJsonObject()) continue;
+                                                JsonObject h = e.getAsJsonObject();
+
+                                                String hD = h.get("dimension").getAsString().toLowerCase();
+                                                int hX = h.get("x").getAsInt();
+                                                int hZ = h.get("z").getAsInt();
+
+                                                double cX, cZ;
+
+                                                switch (dim) {
+                                                    case "overworld" -> {
+                                                        if (hD.equals("nether")) {
+                                                            cX = hX * 8.0;
+                                                            cZ = hZ * 8.0;
+                                                        } else if (hD.equals("overworld")) {
+                                                            cX = hX;
+                                                            cZ = hZ;
+                                                        } else {
+                                                            continue;
+                                                        }
+                                                    }
+                                                    case "nether" -> {
+                                                        if (hD.equals("overworld")) {
+                                                            cX = hX / 8.0;
+                                                            cZ = hZ / 8.0;
+                                                        } else if (hD.equals("nether")) {
+                                                            cX = hX;
+                                                            cZ = hZ;
+                                                        } else {
+                                                            continue;
+                                                        }
+                                                    }
+                                                    case "end" -> {
+                                                        if (!hD.equals("end")) continue;
+                                                        cX = hX;
+                                                        cZ = hZ;
+                                                    }
+                                                    default -> {
+                                                        continue;
+                                                    }
+                                                }
+
+                                                double dX = cX - x;
+                                                double dZ = cZ - z;
+                                                double dist = Math.sqrt(dX * dX + dZ * dZ);
+
+                                                if (dist < closestDist) {
+                                                    closestDist = dist;
+                                                    closestHome = h;
+                                                }
+                                            }
+
+                                            Text message;
+                                            if (closestHome == null) {
+                                                message = Text.literal("No homes found in that dimension.");
+                                            } else {
+                                                Text homeText = Text.literal(closestHome.get("home").getAsString())
+                                                    .setStyle(
+                                                        Style.EMPTY
+                                                            .withColor(Formatting.LIGHT_PURPLE)
+                                                            .withHoverEvent(
+                                                                new HoverEvent.ShowText(
+                                                                    Text.literal(
+                                                                        "Dimension: " + closestHome.get("dimension").getAsString() +
+                                                                            "\nX: " + closestHome.get("x").getAsInt() +
+                                                                            "\nZ: " + closestHome.get("z").getAsInt()
+                                                                    )
+                                                                )
+                                                            )
+                                                    );
+
+                                                message = Text.literal("Closest home is ")
+                                                    .append(homeText)
+                                                    .append(Text.literal(", it is " + (int)closestDist + " blocks away"));
+                                            }
+
+                                            mc.execute(() -> mc.player.sendMessage(message, false));
+                                        }
+                                    } catch (Exception ex) {
+                                        info("Error: " + ex.getMessage());
+                                        ex.printStackTrace();
+                                    }
+                                }).start();
+
+                                return SINGLE_SUCCESS;
+                            })
+                        )
+                    )
+                )
+        );
     }
+
 }

@@ -1,17 +1,11 @@
 package dev.saturn.hyperloop.modules;
 
 import dev.saturn.hyperloop.Hyperloop;
-import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.utils.render.color.Color;
-import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 
 public class HyperloopModule extends Module {
     public final SettingGroup sgGeneral = this.settings.getDefaultGroup();
@@ -49,7 +43,7 @@ public class HyperloopModule extends Module {
             if(botOnline) {
                 mc.execute(() -> {
                     info("Teleporting to " + botName);
-                    mc.getNetworkHandler().sendCommand("tpa " + botName);
+                    mc.getNetworkHandler().sendChatCommand("tpa " + botName);
                 });
                 teleporting = false;
                 botName = "";
