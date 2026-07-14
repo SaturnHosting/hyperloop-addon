@@ -11,12 +11,12 @@ import dev.saturn.hyperloop.modules.HyperloopModule;
 import dev.saturn.hyperloop.util.Utils;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import net.minecraft.command.CommandSource;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +27,7 @@ public class HyperloopCommand extends Command {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<CommandSource> builder) {
+    public void build(LiteralArgumentBuilder<ClientSuggestionProvider> builder) {
         //list
         builder.then(literal("list").executes(context -> {
             new Thread(() -> {
@@ -48,8 +48,8 @@ public class HyperloopCommand extends Command {
                         return;
                     }
 
-                    MutableText finalMessage = Text.literal("Hyperloops: ")
-                        .styled(style -> style.withColor(Formatting.DARK_PURPLE).withBold(true));
+                    MutableComponent finalMessage = Component.literal("Hyperloops: ")
+                        .withStyle(style -> style.withColor(ChatFormatting.DARK_PURPLE).withBold(true));
 
                     boolean first = true;
 
@@ -62,27 +62,27 @@ public class HyperloopCommand extends Command {
                         int x = h.get("x").getAsInt();
                         int z = h.get("z").getAsInt();
 
-                        Text hover = Text.literal(
+                        Component hover = Component.literal(
                             "Dimension: " + dimension +
                                 "\nX: " + x +
                                 "\nZ: " + z
                         );
 
                         Style hoverStyle = Style.EMPTY
-                            .withColor(Formatting.LIGHT_PURPLE)
+                            .withColor(ChatFormatting.LIGHT_PURPLE)
                             .withBold(false)
                             .withHoverEvent(new HoverEvent.ShowText(hover));
 
                         if (!first) {
-                            finalMessage.append(Text.literal(", "));
+                            finalMessage.append(Component.literal(", "));
                         }
                         first = false;
 
-                        finalMessage.append(Text.literal(home).setStyle(hoverStyle));
+                        finalMessage.append(Component.literal(home).setStyle(hoverStyle));
                     }
 
                     if (mc.player != null)
-                        mc.player.sendMessage(finalMessage, false);
+                        mc.execute(() -> mc.player.sendSystemMessage(finalMessage));
                     else
                         error("Error: can't send message to player, god knows why...");
 
@@ -248,17 +248,17 @@ public class HyperloopCommand extends Command {
                                                 }
                                             }
 
-                                            Text message;
+                                            Component message;
                                             if (closestHome == null) {
-                                                message = Text.literal("No homes found in that dimension.");
+                                                message = Component.literal("No homes found in that dimension.");
                                             } else {
-                                                Text homeText = Text.literal(closestHome.get("home").getAsString())
+                                                Component homeText = Component.literal(closestHome.get("home").getAsString())
                                                     .setStyle(
                                                         Style.EMPTY
-                                                            .withColor(Formatting.LIGHT_PURPLE)
+                                                            .withColor(ChatFormatting.LIGHT_PURPLE)
                                                             .withHoverEvent(
                                                                 new HoverEvent.ShowText(
-                                                                    Text.literal(
+                                                                    Component.literal(
                                                                         "Dimension: " + closestHome.get("dimension").getAsString() +
                                                                             "\nX: " + closestHome.get("x").getAsInt() +
                                                                             "\nZ: " + closestHome.get("z").getAsInt()
@@ -267,12 +267,12 @@ public class HyperloopCommand extends Command {
                                                             )
                                                     );
 
-                                                message = Text.literal("Closest home is ")
+                                                message = Component.literal("Closest home is ")
                                                     .append(homeText)
-                                                    .append(Text.literal(", it is " + (int)closestDist + " blocks away"));
+                                                    .append(Component.literal(", it is " + (int)closestDist + " blocks away"));
                                             }
 
-                                            mc.execute(() -> mc.player.sendMessage(message, false));
+                                            mc.execute(() -> mc.player.sendSystemMessage(message));
                                         }
                                     } catch (Exception ex) {
                                         info("Error: " + ex.getMessage());

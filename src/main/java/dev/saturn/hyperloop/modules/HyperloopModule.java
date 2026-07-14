@@ -5,7 +5,7 @@ import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.multiplayer.PlayerInfo;
 
 public class HyperloopModule extends Module {
     public final SettingGroup sgGeneral = this.settings.getDefaultGroup();
@@ -34,16 +34,16 @@ public class HyperloopModule extends Module {
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
-        if(teleporting && mc.player != null && mc.getNetworkHandler() != null && !botName.isEmpty()) {
-            boolean botOnline = mc.getNetworkHandler().getPlayerList()
+        if(teleporting && mc.player != null && mc.getConnection() != null && !botName.isEmpty()) {
+            boolean botOnline = mc.getConnection().getOnlinePlayers()
                 .stream()
-                .map(PlayerListEntry::getProfile)
-                .anyMatch(profile -> profile.getName().equalsIgnoreCase(botName));
+                .map(PlayerInfo::getProfile)
+                .anyMatch(profile -> profile.name().equalsIgnoreCase(botName));
 
             if(botOnline) {
                 mc.execute(() -> {
                     info("Teleporting to " + botName);
-                    mc.getNetworkHandler().sendChatCommand("tpa " + botName);
+                    mc.getConnection().sendCommand("tpa " + botName);
                 });
                 teleporting = false;
                 botName = "";
