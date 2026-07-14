@@ -1,5 +1,7 @@
-name: Publish Development Build
-on: push
+name: Publish Build
+
+on:
+  push:
 
 permissions:
   contents: write
@@ -11,6 +13,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -18,21 +22,26 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: 21
-        
-      - name: Make gradlew executable
+
+      - name: Chmod gradlew
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Get branch name
+        id: branch
+        run: |
+          echo "name=$(echo ${GITHUB_REF#refs/heads/} | tr '/' '-')" >> $GITHUB_OUTPUT
+
       - name: Release
         uses: marvinpinto/action-automatic-releases@latest
         with:
-          repo_token: '${{ secrets.GITHUB_TOKEN }}'
-          automatic_release_tag: snapshot
-          prerelease: true
-          title: Build
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: snapshot-${{ steps.branch.outputs.name }}
+          prerelease: false
+          title: Release ${{ steps.branch.outputs.name }}
           files: |
             ./build/libs/*.jar
